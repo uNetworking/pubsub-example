@@ -1,0 +1,128 @@
+ <html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+
+    <script>
+    let canvas, ctx, flag = false, prevX = 0, currX = 0, prevY = 0, currY = 0, ws;
+
+	let new_lines = [];
+    
+    function main() {
+
+
+	/*ws = io('http://localhost:3000/');
+
+
+	ws.on('connect', () => {
+	  // now we are connected
+
+console.log("open! socketio");
+		
+	});
+
+	ws.on('message', (message) => {
+	  // here we got something sent from the server
+
+		if (new_lines.length == 0) {
+			window.requestAnimationFrame(() => {
+				ctx.beginPath();
+
+				new_lines.forEach((li) => {
+					ctx.moveTo(li[0], li[1]);
+					ctx.lineTo(li[2], li[3]);
+				});
+
+				ctx.stroke();
+				ctx.closePath();
+			
+				new_lines = [];
+			});
+		}
+		new_lines.push(JSON.parse(message));
+
+	});*/
+
+	// init with websockets or socketio
+	ws = new WebSocket('ws://localhost:9001');
+	ws.binaryType = 'arraybuffer';
+
+	ws.onopen = () => {
+		console.log("open!");
+	};
+
+	ws.onmessage = (message) => {
+
+
+		if (new_lines.length == 0) {
+			window.requestAnimationFrame(() => {
+				ctx.beginPath();
+
+				new_lines.forEach((li) => {
+					ctx.moveTo(li[0], li[1]);
+					ctx.lineTo(li[2], li[3]);
+				});
+
+				ctx.stroke();
+				ctx.closePath();
+			
+				new_lines = [];
+			});
+		}
+		new_lines.push(new Uint16Array(message.data));
+
+	};
+
+	
+
+
+
+        canvas = document.getElementById('can');
+        ctx = canvas.getContext("2d");
+        w = canvas.width;
+        h = canvas.height;
+
+		ctx.strokeStyle = 'black';
+		ctx.lineWidth = 1;
+    
+        canvas.addEventListener("mousemove", function (e) {
+
+
+            if (flag) {
+                prevX = currX;
+                prevY = currY;
+            currX = e.clientX / window.innerWidth * 720;
+            currY = e.clientY / window.innerHeight * 480;
+                
+		
+
+		
+
+		ws.send(Uint16Array.of(prevX, prevY, currX, currY));
+
+		//ws.send(JSON.stringify([prevX, prevY, currX, currY]));
+		
+            }
+
+
+        }, false);
+        canvas.addEventListener("mousedown", function (e) {
+
+            currX = e.clientX / window.innerWidth * 720;
+            currY = e.clientY / window.innerHeight * 480;
+	    flag = true;
+
+        }, false);
+        canvas.addEventListener("mouseup", function (e) {
+ 		flag = false;
+        }, false);
+        canvas.addEventListener("mouseout", function (e) {
+		flag = false;
+        }, false);
+    }
+    
+
+
+    </script>
+    <body onload="main()" style="margin: 0; height: 100vh; width: 100vw">
+        <canvas id="can" width="720" height="480" style="height: 100%; width: 100%"></canvas>
+    </body>
+    </html>
