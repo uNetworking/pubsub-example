@@ -1,14 +1,13 @@
-const server_io = require('socket.io')(3000);
-
+const io = require('socket.io')(3000);
 
 /* Define the server */
-server_io.on('connection', function(socket) {
+io.on('connection', function(socket) {
 
-	socket.join('broadcast');
+	/* For now we only have one canvas */
+	socket.join("drawing/canvas1");
 
 	socket.on('message', (message) => {
-
-		server_io.in('broadcast').send(message);
-
+		/* In this simplified example we only have drawing commands */
+		io.in('drawing/canvas1').send(message);
 	});
 });
