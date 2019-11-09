@@ -1,0 +1,77 @@
+ <html>
+	<head>
+		<script>
+				let canvas, ctx, flag = false, prevX = 0, currX = 0, prevY = 0, currY = 0, ws;
+				let new_lines = [];
+				
+				function main() {
+					/* Connect to the server */
+					ws = new WebSocket('ws://localhost:9001');
+					ws.binaryType = 'arraybuffer';
+		
+					ws.onopen = () => {
+						/* Join the "room" of canvas 1 */
+					};
+		
+					/* For every message we receive */
+					ws.onmessage = (message) => {
+						/* Request a new animation frame on first draw */
+						if (new_lines.length == 0) {
+							window.requestAnimationFrame(() => {
+								ctx.beginPath();
+		
+								new_lines.forEach((li) => {
+									ctx.moveTo(li[0], li[1]);
+									ctx.lineTo(li[2], li[3]);
+								});
+		
+								ctx.stroke();
+								ctx.closePath();
+							
+								new_lines = [];
+							});
+						}
+						/* Add this draw to the pending buffer */
+						new_lines.push(new Uint16Array(message.data));
+					};
+		
+					canvas = document.getElementById('can');
+					ctx = canvas.getContext("2d");
+					w = canvas.width;
+					h = canvas.height;
+		
+					ctx.strokeStyle = 'black';
+					ctx.lineWidth = 1;
+				
+					canvas.addEventListener("mousemove", function (e) {
+						if (flag) {
+							prevX = currX;
+							prevY = currY;
+							currX = e.clientX / window.innerWidth * 720;
+							currY = e.clientY / window.innerHeight * 480;
+							
+							/* Send to the server how we drew */
+							ws.send(Uint16Array.of(prevX, prevY, currX, currY));
+						}
+					}, false);
+		
+					canvas.addEventListener("mousedown", function (e) {
+						currX = e.clientX / window.innerWidth * 720;
+						currY = e.clientY / window.innerHeight * 480;
+						flag = true;
+					}, false);
+		
+					canvas.addEventListener("mouseup", function (e) {
+						flag = false;
+					}, false);
+		
+					canvas.addEventListener("mouseout", function (e) {
+						flag = false;
+					}, false);
+				}
+			</script>
+	</head>
+    <body onload="main()" style="margin: 0; height: 100vh; width: 100vw">
+        <canvas id="can" width="720" height="480" style="height: 100%; width: 100%"></canvas>
+    </body>
+</html>
